@@ -173,13 +173,13 @@ def finalize_unmatched(images, used, unmatched_dir):
             print(f'Unmatched {img_path.name}')
             shutil.copy(img_path, unmatched_dir / img_path.name)
 
-def main():
-    args = parse_args()
-    names = read_names(Path(args.spreadsheet))
+def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched'):
+    """Run the renaming process without using CLI arguments."""
+    names = read_names(Path(spreadsheet))
 
-    input_dir = Path(args.input_dir)
-    output_dir = Path(args.output_dir)
-    unmatched_dir = Path(args.unmatched_dir)
+    input_dir = Path(input_dir)
+    output_dir = Path(output_dir)
+    unmatched_dir = Path(unmatched_dir)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     unmatched_dir.mkdir(parents=True, exist_ok=True)
@@ -213,6 +213,12 @@ def main():
                         unmatched_dir, used, badge_counts)
 
     finalize_unmatched(images, used, unmatched_dir)
+
+
+def main():
+    args = parse_args()
+    process_images(args.spreadsheet, args.input_dir,
+                   args.output_dir, args.unmatched_dir)
 
 if __name__ == '__main__':
     main()
