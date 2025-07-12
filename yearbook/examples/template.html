@@ -1,14 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Kablammo&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <style>
 	body { 
-		font-family: sans-serif; margin: 0px; padding: 0px; background-color: grey; 
+		font-family: sans-serif; margin: 0px; padding: 0px; 
 	}
 	.top {
 		position: absolute;
 		left: 0px; right: 0px; top: 0px; bottom: 0px;
+	}
+	.sillyfont {
+	  font-family: "Kablammo", system-ui;
+	  font-optical-sizing: auto;
+	  font-weight: 400;
+	  font-style: normal;
+	  font-variation-settings:"MORF" 0;
 	}
 </style>
 </head>
@@ -16,8 +27,8 @@
 	<div class='top' style='display: flex; flex-direction: row'>
 		<img style='width: 400px; height: 600px; flex: 0' src="{{photo}}">
 		<div style='margin-left: 10px; flex: 1'>
-			<h1>{{name}}</h1>
-			<p class="quote">"{{quote}}"</p>
+			<h1 class='sillyfont'>{{name}}</h1>
+			<p class="quote sillyfont">"{{quote}}"</p>
 			<p><strong>Home Town:</strong> {{hometown}}</p>
 			<p><strong>Birthday:</strong> {{birthday}}</p>
 		</div>
