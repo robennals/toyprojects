@@ -10,6 +10,12 @@ sudo apt-get install -y tesseract-ocr
 python rename.py names.csv /path/to/input_photos /path/to/output_photos
 ```
 
+A small cross‑platform GUI is also available:
+
+```bash
+python gui.py
+```
+
 The script expects `names.csv` to contain a column called `name`.  It looks for
 badge photos where the badge text matches one of these names.  When a badge is
 found the following five photos are scanned for additional pictures of the same
