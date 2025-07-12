@@ -7,12 +7,13 @@ from yearbook import generate_pdf, render_pages
 import pandas as pd
 
 
-def run_processing(spreadsheet, template, output_path, photo_base, log_widget):
+def run_processing(spreadsheet, template, output_path, photo_base, per_page,
+                   log_widget):
     try:
         df = pd.read_csv(spreadsheet)
         with open(template, 'r', encoding='utf-8') as f:
             template_str = f.read()
-        pages = render_pages(df, template_str, photo_base)
+        pages = render_pages(df, template_str, photo_base, per_page)
         generate_pdf(pages, output_path)
         log_widget.insert(tk.END, f"Generated {output_path}\n")
     except Exception as e:
@@ -22,11 +23,12 @@ def run_processing(spreadsheet, template, output_path, photo_base, log_widget):
 
 
 def start_processing(spreadsheet_var, template_var, output_var, photo_base_var,
-                      log_widget, start_button):
+                      per_page_var, log_widget, start_button):
     spreadsheet = spreadsheet_var.get()
     template = template_var.get()
     output_path = output_var.get() or 'yearbook.pdf'
     photo_base = photo_base_var.get()
+    per_page = per_page_var.get() or 1
     if not spreadsheet or not template:
         messagebox.showwarning(
             "Missing fields", "Please select spreadsheet and template files.")
@@ -34,7 +36,8 @@ def start_processing(spreadsheet_var, template_var, output_var, photo_base_var,
     start_button.config(state=tk.DISABLED)
     log_widget.delete(1.0, tk.END)
     thread = threading.Thread(target=lambda: [
-        run_processing(spreadsheet, template, output_path, photo_base, log_widget),
+        run_processing(spreadsheet, template, output_path, photo_base,
+                       per_page, log_widget),
         start_button.config(state=tk.NORMAL)
     ])
     thread.start()
@@ -67,6 +70,7 @@ def main():
     template_var = tk.StringVar()
     output_var = tk.StringVar(value='yearbook.pdf')
     photo_base_var = tk.StringVar()
+    per_page_var = tk.IntVar(value=1)
 
     tk.Label(root, text="Spreadsheet:").grid(row=0, column=0, sticky="e", padx=5,
                                                pady=5)
@@ -101,16 +105,22 @@ def main():
                                                                     column=2,
                                                                     padx=5)
 
+    tk.Label(root, text="Profiles per Page:").grid(row=4, column=0, sticky="e",
+                                                    padx=5, pady=5)
+    tk.Entry(root, textvariable=per_page_var, width=40).grid(row=4, column=1,
+                                                             padx=5)
+
     log_widget = scrolledtext.ScrolledText(root, width=60, height=15)
-    log_widget.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
+    log_widget.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
 
     start_button = tk.Button(
         root,
         text="Run",
         command=lambda: start_processing(spreadsheet_var, template_var, output_var,
-                                         photo_base_var, log_widget, start_button)
+                                         photo_base_var, per_page_var, log_widget,
+                                         start_button)
     )
-    start_button.grid(row=5, column=1, pady=10)
+    start_button.grid(row=6, column=1, pady=10)
 
     root.mainloop()
 
