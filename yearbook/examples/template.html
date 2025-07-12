@@ -3,17 +3,24 @@
 <head>
 <meta charset="utf-8">
 <style>
-body { font-family: sans-serif; }
-.photo { float: right; width: 100px; height: 100px; }
-.clearfix { clear: both; }
+	body { 
+		font-family: sans-serif; margin: 0px; padding: 0px; background-color: grey; 
+	}
+	.top {
+		position: absolute;
+		left: 0px; right: 0px; top: 0px; bottom: 0px;
+	}
 </style>
 </head>
 <body>
-<img class="photo" src="{{photo}}">
-<h1>{{name}}</h1>
-<p class="quote">"{{quote}}"</p>
-<p><strong>Home town:</strong> {{home town}}</p>
-<p><strong>Birthday:</strong> {{birthday}}</p>
-<div class="clearfix"></div>
+	<div class='top' style='display: flex; flex-direction: row'>
+		<img style='width: 400px; height: 600px; flex: 0' src="{{photo}}">
+		<div style='margin-left: 10px; flex: 1'>
+			<h1>{{name}}</h1>
+			<p class="quote">"{{quote}}"</p>
+			<p><strong>Home Town:</strong> {{hometown}}</p>
+			<p><strong>Birthday:</strong> {{birthday}}</p>
+		</div>
+	</div>	
 </body>
 </html>
