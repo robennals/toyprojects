@@ -52,3 +52,16 @@ This repository contains several small tools that can be combined to produce a s
    
    Finally, use any PDF merge tool to combine the generated pages with other material such as introductions or advertisements.
 
+
+## PDF Page Numbers
+
+The `pdfnumber` folder contains a small utility to merge PDFs and
+apply page numbers using Mustache templates.
+
+```bash
+pip install -r pdfnumber/requirements.txt
+python pdfnumber/paginate.py pdfnumber/example.yml
+```
+
+See `pdfnumber/README.md` for details.
+
