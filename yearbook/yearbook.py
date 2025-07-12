@@ -11,11 +11,16 @@ HTML_TEMPLATE_DEFAULT = """
 <head>
 <meta charset='utf-8'>
 <style>
+@page {
+  size: 8.5in 11in;
+  margin: 0;
+}
 .page {
   page-break-after: always;
   width: 8.5in;
   height: 11in;
-  padding: 1in;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 .page:last-child { page-break-after: auto; }
