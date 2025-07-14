@@ -59,11 +59,29 @@ def parse_args():
     parser.add_argument('output_dir', help='Output folder')
     parser.add_argument('--unmatched_dir', default='unmatched',
                         help='Folder for unmatched images')
+    parser.add_argument('--first_last', action='store_true',
+                        help='Spreadsheet has separate first and last name columns')
+    parser.add_argument('--skip_rows', type=int, default=0,
+                        help='Number of initial rows to skip when reading the spreadsheet')
     return parser.parse_args()
 
-def read_names(path: Path):
-    df = pd.read_csv(path)
-    return df['name'].dropna().tolist()
+def read_names(path: Path, first_last: bool = False, skip_rows: int = 0):
+    """Read names from the spreadsheet."""
+    df = pd.read_csv(path, skiprows=skip_rows)
+    if first_last:
+        first_col = df.columns[0]
+        last_col = df.columns[1]
+        names = []
+        for first, last in zip(df[first_col], df[last_col]):
+            if pd.isna(first) or pd.isna(last):
+                continue
+            first = str(first).strip()
+            last = str(last).strip()
+            if first and last:
+                names.append(f"{first} {last}")
+        return names
+    else:
+        return df['name'].dropna().tolist()
 
 def list_images(folder: Path):
     return sorted(p for p in folder.iterdir() if p.is_file())
@@ -173,9 +191,11 @@ def finalize_unmatched(images, used, unmatched_dir):
             print(f'Unmatched {img_path.name}')
             shutil.copy(img_path, unmatched_dir / img_path.name)
 
-def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched'):
+def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched',
+                   first_last=False, skip_rows=0):
     """Run the renaming process without using CLI arguments."""
-    names = read_names(Path(spreadsheet))
+    names = read_names(Path(spreadsheet), first_last=first_last,
+                       skip_rows=skip_rows)
 
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
@@ -217,8 +237,14 @@ def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched'
 
 def main():
     args = parse_args()
-    process_images(args.spreadsheet, args.input_dir,
-                   args.output_dir, args.unmatched_dir)
+    process_images(
+        args.spreadsheet,
+        args.input_dir,
+        args.output_dir,
+        args.unmatched_dir,
+        first_last=args.first_last,
+        skip_rows=args.skip_rows,
+    )
 
 if __name__ == '__main__':
     main()
