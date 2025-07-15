@@ -1,0 +1,10 @@
+output: merged.pdf
+first_page: 1
+files:
+  - path: section1.pdf
+    template: page_numbers.html
+    position: above
+  - path: section2.pdf
+    left_template: left.html
+    right_template: right.html
+    position: below
