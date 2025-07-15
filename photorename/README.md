@@ -15,6 +15,7 @@ Optional arguments:
 ```
 --first_last      spreadsheet uses first and last name columns instead of a single name column
 --skip_rows N     skip the first N rows in the spreadsheet
+--badge_dir DIR   save cropped badge images to this folder
 ```
 
 A small cross‑platform GUI is also available:
@@ -29,7 +30,9 @@ last names instead.  Use `--skip_rows N` to ignore header lines or other data at
 the top of the sheet.  The script looks for badge photos where the badge text
 matches one of these names.  When a badge is
 found the following five photos are scanned for additional pictures of the same
-person without the badge using a simple face comparison based on OpenCV.  The matched images are copied
+person without the badge using a simple face comparison based on OpenCV.  Before
+OCR the badge area is automatically cropped.  Cropped badges can optionally be
+saved with ``--badge_dir`` for inspection.  The matched images are copied
 to the output directory and renamed as described in the script.
 
 Unmatched images are copied to the `unmatched` folder inside the output

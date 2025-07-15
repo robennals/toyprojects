@@ -19,11 +19,80 @@ def load_image(path: Path) -> Image.Image:
         img = Image.open(path)
     return ImageOps.exif_transpose(img)
 
-def detect_name(img: Image.Image, valid_names):
+
+def find_badge(image: np.ndarray):
+    """Return bounding box of the most likely badge or ``None``."""
+    scale = 1000.0 / image.shape[1]
+    if scale < 1.0:
+        small = cv2.resize(image, (0, 0), fx=scale, fy=scale)
+        factor = 1.0 / scale
+    else:
+        small = image
+        factor = 1.0
+
+    gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    _, thresh = cv2.threshold(blur, 0, 255,
+                             cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE,
+                              np.ones((5, 5), np.uint8))
+
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL,
+                                   cv2.CHAIN_APPROX_SIMPLE)
+    img_area = small.shape[0] * small.shape[1]
+
+    best_rect = None
+    best_score = 0.0
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area < img_area * 0.005:
+            continue
+        x, y, w, h = cv2.boundingRect(cnt)
+        aspect = w / float(h)
+        if not (0.4 <= aspect <= 2.5):
+            continue
+
+        rect_area = float(w * h)
+        rectangularity = area / rect_area
+        whiteness = np.mean(gray[y : y + h, x : x + w]) / 255.0
+
+        score = (whiteness ** 3) * (rectangularity ** 2) / ((area / img_area) ** 0.5)
+
+        if score > best_score:
+            best_score = score
+            best_rect = (
+                int(x * factor),
+                int(y * factor),
+                int(w * factor),
+                int(h * factor),
+            )
+    return best_rect
+
+
+def badgecrop(img: Image.Image):
+    """Return a cropped badge PIL image if one is detected."""
+    bgr = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
+    rect = find_badge(bgr)
+    if rect is None:
+        return None
+    x, y, w, h = rect
+    badge = bgr[y : y + h, x : x + w]
+    rgb = cv2.cvtColor(badge, cv2.COLOR_BGR2RGB)
+    return Image.fromarray(rgb)
+
+def detect_name(img: Image.Image, valid_names, badge_dir: Path | None = None,
+                orig_path: Path | None = None):
     """Return a matching name if found and whether any text was detected."""
-    # OCR the entire image.  In practice badges may sit well below the face and
-    # the simple face-based crop used previously often missed the text.
-    text = pytesseract.image_to_string(img, config='--psm 6')
+    crop = badgecrop(img)
+    ocr_img = crop if crop is not None else img
+    if crop is not None and badge_dir is not None and orig_path is not None:
+        dest = badge_dir / f"{orig_path.stem}-badgecrop.jpeg"
+        save_jpeg(crop, dest)
+
+    # OCR the badge crop if available otherwise the entire image.  In practice
+    # badges may sit well below the face and the simple face-based crop used
+    # previously often missed the text.
+    text = pytesseract.image_to_string(ocr_img, config='--psm 6')
     print('text in image', text)
     cleaned = "".join(ch for ch in text if ch.isalnum() or ch.isspace()).strip()
     normalized = "".join(ch.lower() for ch in cleaned if ch.isalnum())
@@ -62,6 +131,8 @@ def parse_args():
     parser.add_argument('output_dir', help='Output folder')
     parser.add_argument('--unmatched_dir', default='unmatched',
                         help='Folder for unmatched images')
+    parser.add_argument('--badge_dir', default=None,
+                        help='Optional folder to save badge crops')
     parser.add_argument('--first_last', action='store_true',
                         help='Spreadsheet has separate first and last name columns')
     parser.add_argument('--skip_rows', type=int, default=0,
@@ -195,8 +266,12 @@ def finalize_unmatched(images, used, unmatched_dir):
             shutil.copy(img_path, unmatched_dir / img_path.name)
 
 def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched',
-                   first_last=False, skip_rows=0):
-    """Run the renaming process without using CLI arguments."""
+                   first_last=False, skip_rows=0, badge_dir=None):
+    """Run the renaming process without using CLI arguments.
+
+    If ``badge_dir`` is provided, each detected badge crop is saved there using
+    the original filename with a ``-badgecrop.jpeg`` suffix.
+    """
     names = read_names(Path(spreadsheet), first_last=first_last,
                        skip_rows=skip_rows)
 
@@ -213,6 +288,9 @@ def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched'
     used = set()
     badge_counts = {}
     assigned_names = set()
+    if badge_dir:
+        badge_dir = Path(badge_dir)
+        badge_dir.mkdir(parents=True, exist_ok=True)
 
     for i, img_path in enumerate(images):
         if img_path in used:
@@ -225,7 +303,7 @@ def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched'
             print(f'Could not load {img_path}: {e}')
             continue
 
-        name, has_text = detect_name(img, names)
+        name, has_text = detect_name(img, names, badge_dir, img_path)
         print('Detected name', name)
         print('has text', has_text)
         if name:
@@ -254,6 +332,7 @@ def main():
         args.unmatched_dir,
         first_last=args.first_last,
         skip_rows=args.skip_rows,
+        badge_dir=args.badge_dir,
     )
 
 if __name__ == '__main__':
