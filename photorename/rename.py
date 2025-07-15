@@ -24,11 +24,14 @@ def detect_name(img: Image.Image, valid_names):
     # OCR the entire image.  In practice badges may sit well below the face and
     # the simple face-based crop used previously often missed the text.
     text = pytesseract.image_to_string(img, config='--psm 6')
+    print('text in image', text)
     cleaned = "".join(ch for ch in text if ch.isalnum() or ch.isspace()).strip()
     normalized = "".join(ch.lower() for ch in cleaned if ch.isalnum())
+    print('normalized text', normalized)
     for name in valid_names:
         name_norm = "".join(ch.lower() for ch in name if ch.isalnum())
         if name_norm in normalized:
+            print('found name', name_norm)
             return name, True
     return None, bool(cleaned)
 
@@ -197,6 +200,8 @@ def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched'
     names = read_names(Path(spreadsheet), first_last=first_last,
                        skip_rows=skip_rows)
 
+    print('names', names)
+
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
     unmatched_dir = Path(unmatched_dir)
@@ -213,12 +218,16 @@ def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched'
         if img_path in used:
             continue
         try:
+            print('loading image', img_path)
             img = load_image(img_path)
+            print('loaded image', img_path)
         except Exception as e:
             print(f'Could not load {img_path}: {e}')
             continue
 
         name, has_text = detect_name(img, names)
+        print('Detected name', name)
+        print('has text', has_text)
         if name:
             process_badge(img_path, img, name, i, images, names,
                           output_dir, unmatched_dir, used, badge_counts,
@@ -236,6 +245,7 @@ def process_images(spreadsheet, input_dir, output_dir, unmatched_dir='unmatched'
 
 
 def main():
+    print('Starting up')
     args = parse_args()
     process_images(
         args.spreadsheet,
