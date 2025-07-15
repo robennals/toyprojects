@@ -30,19 +30,30 @@ def find_badge(image: np.ndarray):
     img_area = small.shape[0] * small.shape[1]
 
     best_rect = None
-    best_area = 0
+    best_score = 0.0
     for cnt in contours:
         area = cv2.contourArea(cnt)
         if area < img_area * 0.005:
             continue
-        peri = cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
-        if len(approx) == 4:
-            x, y, w, h = cv2.boundingRect(approx)
-            aspect = w / float(h)
-            if 0.5 <= aspect <= 2.0 and area > best_area:
-                best_area = area
-                best_rect = (int(x * factor), int(y * factor), int(w * factor), int(h * factor))
+        x, y, w, h = cv2.boundingRect(cnt)
+        aspect = w / float(h)
+        if not (0.4 <= aspect <= 2.5):
+            continue
+
+        rect_area = float(w * h)
+        rectangularity = area / rect_area
+        whiteness = np.mean(gray[y : y + h, x : x + w]) / 255.0
+
+        score = (whiteness ** 3) * (rectangularity ** 2) / ((area / img_area) ** 0.5)
+
+        if score > best_score:
+            best_score = score
+            best_rect = (
+                int(x * factor),
+                int(y * factor),
+                int(w * factor),
+                int(h * factor),
+            )
     return best_rect
 
 
