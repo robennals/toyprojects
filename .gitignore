@@ -4,3 +4,4 @@ __pycache__/
 *.pdf
 sample_output
 .DS_Store
+data
