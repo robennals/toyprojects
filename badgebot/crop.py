@@ -2,6 +2,7 @@
 """Crop a white rectangular badge from an image if present."""
 
 import argparse
+from pathlib import Path
 import cv2
 import numpy as np
 
@@ -42,7 +43,6 @@ def find_badge(image: np.ndarray):
             if 0.5 <= aspect <= 2.0 and area > best_area:
                 best_area = area
                 best_rect = (int(x * factor), int(y * factor), int(w * factor), int(h * factor))
-
     return best_rect
 
 
